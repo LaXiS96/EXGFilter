@@ -1,0 +1,88 @@
+;
+; EXGFilter.inf
+;
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=Mouse
+ClassGuid={4D36E96F-E325-11CE-BFC1-08002BE10318}
+Provider=%ManufacturerName%
+CatalogFile=EXGFilter.cat
+DriverVer= ; TODO: set DriverVer in stampinf property pages
+PnpLockdown=1
+
+[DestinationDirs]
+DefaultDestDir = 12
+EXGFilter_Device_CoInstaller_CopyFiles = 11
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+EXGFilter.sys  = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName%=Standard,NT$ARCH$
+
+[Standard.NT$ARCH$]
+%EXGFilter.DeviceDesc%=EXGFilter_Device, HID\VID_056E&PID_00FB&Col01
+
+[EXGFilter_Device.NT]
+Include = msmouse.inf
+Needs = HID_Mouse_Inst.NT
+CopyFiles=Drivers_Dir
+
+[Drivers_Dir]
+EXGFilter.sys
+
+[EXGFilter_Device.NT.HW]
+Include = msmouse.inf
+Needs = HID_Mouse_Inst.NT.HW
+AddReg = EXGFilter_Device_AddReg
+
+[EXGFilter_Device_AddReg]
+HKR,,"LowerFilters",0x00010000,"EXGFilter"
+
+;-------------- Service installation
+[EXGFilter_Device.NT.Services]
+Include = msmouse.inf
+Needs = HID_Mouse_Inst.NT.Services
+AddService = EXGFilter,, EXGFilter_Service_Inst
+
+; -------------- EXGFilter driver install sections
+[EXGFilter_Service_Inst]
+DisplayName    = %EXGFilter.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\EXGFilter.sys
+
+;
+;--- EXGFilter_Device Coinstaller installation ------
+;
+
+[EXGFilter_Device.NT.CoInstallers]
+AddReg=EXGFilter_Device_CoInstaller_AddReg
+CopyFiles=EXGFilter_Device_CoInstaller_CopyFiles
+
+[EXGFilter_Device_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[EXGFilter_Device_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[EXGFilter_Device.NT.Wdf]
+KmdfService =  EXGFilter, EXGFilter_wdfsect
+[EXGFilter_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+ManufacturerName="<Your manufacturer name>" ;TODO: Replace with your manufacturer name
+DiskName = "EXGFilter Installation Disk"
+EXGFilter.DeviceDesc = "EXGFilter Device"
+EXGFilter.SVCDESC = "EXGFilter Service"
